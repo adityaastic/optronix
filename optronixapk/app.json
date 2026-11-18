@@ -1,0 +1,49 @@
+{
+  "expo": {
+    "name": "Optronix",
+    "slug": "optronix-mobile",
+    "version": "1.0.0",
+    "orientation": "default",
+    "icon": "./assets/icon.png",
+    "splash": {
+      "image": "./assets/splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#FFFFFF"
+    },
+    "userInterfaceStyle": "light",
+    "newArchEnabled": false,
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.optronix.sales",
+      "infoPlist": {
+        "NSLocationWhenInUseUsageDescription": "Optronix verifies customer site geofence coordinates during field visit check-in and check-out."
+      }
+    },
+    "android": {
+      "package": "com.optronix.sales",
+      "versionCode": 1,
+      "permissions": [
+        "ACCESS_COARSE_LOCATION",
+        "ACCESS_FINE_LOCATION",
+        "INTERNET"
+      ],
+      "adaptiveIcon": {
+        "backgroundColor": "#FFFFFF",
+        "foregroundImage": "./assets/adaptive-icon.png"
+      }
+    },
+    "web": {
+      "bundler": "metro",
+      "favicon": "./assets/favicon.png"
+    },
+    "plugins": [
+      "expo-secure-store",
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "Allow Optronix to verify your customer site location during field check-in and check-out."
+        }
+      ]
+    ]
+  }
+}

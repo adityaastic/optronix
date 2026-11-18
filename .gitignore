@@ -1,0 +1,32 @@
+# Dependencies
+node_modules/
+.pnpm-store/
+
+# Build & cache outputs
+dist/
+.next/
+out/
+build/
+.expo/
+.gradle-home/
+optronixapk/android/.gradle/
+optronixapk/android/build/
+optronixapk/android/app/build/
+optronixapk/android/local.properties
+*.tsbuildinfo
+
+# Environment secrets
+.env
+.env.local
+.env.*.local
+
+# Runtime uploads & test reports
+uploads/
+playwright-report/
+test-results/
+coverage/
+
+# Logs & OS
+*.log
+.DS_Store
+Thumbs.db
