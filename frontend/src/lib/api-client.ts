@@ -67,6 +67,7 @@ export async function apiFetch<T, M = Record<string, unknown>>(
 
   const execute = () =>
     fetch(url, {
+      cache: 'no-store',
       ...rest,
       credentials: 'include',
       headers: {
@@ -98,6 +99,10 @@ export async function apiFetch<T, M = Record<string, unknown>>(
     if (refreshed) {
       res = await execute();
     }
+  }
+
+  if (res.status === 204) {
+    return { data: undefined as unknown as T };
   }
 
   let json: ApiResponse<T, M> | null = null;

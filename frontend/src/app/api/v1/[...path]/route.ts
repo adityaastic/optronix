@@ -206,7 +206,9 @@ async function proxyRequest(
       lower === 'connection' ||
       lower === 'content-length' ||
       lower === 'transfer-encoding' ||
-      lower === 'accept-encoding'
+      lower === 'accept-encoding' ||
+      lower === 'if-none-match' ||
+      lower === 'if-modified-since'
     ) {
       return;
     }
@@ -278,9 +280,25 @@ async function proxyRequest(
     responseHeaders.append('set-cookie', rawCookies);
   }
 
+  const statusCode = upstreamRes.statusCode ?? 200;
+  const isNullBodyStatus =
+    statusCode === 204 ||
+    statusCode === 205 ||
+    statusCode === 304 ||
+    method === 'HEAD';
+
+  if (isNullBodyStatus) {
+    upstreamRes.resume();
+    return new Response(null, {
+      status: statusCode,
+      statusText: upstreamRes.statusMessage ?? 'OK',
+      headers: responseHeaders,
+    });
+  }
+
   const webStream = Readable.toWeb(upstreamRes) as unknown as ReadableStream;
   return new Response(webStream, {
-    status: upstreamRes.statusCode ?? 200,
+    status: statusCode,
     statusText: upstreamRes.statusMessage ?? 'OK',
     headers: responseHeaders,
   });
