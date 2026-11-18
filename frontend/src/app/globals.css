@@ -45,6 +45,86 @@
   animation: optronix-gps-pulse 2s cubic-bezier(0, 0, 0.2, 1) infinite;
 }
 
+@keyframes optronix-logo-reveal {
+  0% {
+    opacity: 0;
+    clip-path: inset(0 100% 0 0);
+    transform: translateY(6px) scale(0.96);
+  }
+  100% {
+    opacity: 1;
+    clip-path: inset(0 0% 0 0);
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes optronix-progress-sweep {
+  0% {
+    transform: scaleX(0);
+    opacity: 0.4;
+  }
+  100% {
+    transform: scaleX(1);
+    opacity: 1;
+  }
+}
+
+@keyframes optronix-fade-up {
+  0% {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes optronix-caret-blink {
+  0%,
+  49% {
+    opacity: 1;
+  }
+  50%,
+  100% {
+    opacity: 0;
+  }
+}
+
+.optronix-splash-logo {
+  animation: optronix-logo-reveal 720ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.optronix-splash-bar {
+  transform-origin: left center;
+  animation: optronix-progress-sweep 1050ms cubic-bezier(0.22, 1, 0.36, 1) 120ms both;
+}
+
+.optronix-splash-caption {
+  animation: optronix-fade-up 520ms cubic-bezier(0.16, 1, 0.3, 1) 240ms both;
+}
+
+.optronix-auth-reveal {
+  animation: optronix-fade-up 520ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.optronix-typewriter-caret {
+  animation: optronix-caret-blink 850ms steps(2, start) infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .optronix-splash-logo,
+  .optronix-splash-bar,
+  .optronix-splash-caption,
+  .optronix-auth-reveal,
+  .optronix-typewriter-caret {
+    animation: none !important;
+    clip-path: none !important;
+    opacity: 1 !important;
+    transform: none !important;
+  }
+}
+
 .leaflet-container {
   font-family: inherit;
   z-index: 1;

@@ -1,6 +1,5 @@
 import React, { useMemo, useState } from 'react';
 import {
-  ActivityIndicator,
   Image,
   Pressable,
   ScrollView,
@@ -13,6 +12,7 @@ import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import { Feather } from '@expo/vector-icons';
 import { AuthProvider, useMobileAuth } from './src/context/AuthContext';
+import { MobileBrandSplash } from './src/components/MobileBrandSplash';
 import { PERMISSIONS } from './src/lib/domain';
 import { AuthScreens } from './src/screens/AuthScreens';
 import { DashboardScreen } from './src/screens/DashboardScreen';
@@ -59,7 +59,7 @@ interface NavItem {
   badge?: number;
 }
 
-function WorkspaceApp() {
+function WorkspaceApp({ introReady }: { introReady: boolean }) {
   const { user, isBootstrapping, hasPermission } = useMobileAuth();
   const { width } = useWindowDimensions();
   const isWideLayout = width >= 900;
@@ -129,19 +129,15 @@ function WorkspaceApp() {
     return base;
   }, [user, hasPermission]);
 
-  if (isBootstrapping) {
-    return (
-      <SafeAreaView style={styles.centered}>
-        <ActivityIndicator size="large" color={COLORS.accent} />
-      </SafeAreaView>
-    );
-  }
-
   if (!user) {
     return (
-      <SafeAreaView style={{ flex: 1, backgroundColor: COLORS.background }}>
-        <AuthScreens />
-      </SafeAreaView>
+      <View style={{ flex: 1, backgroundColor: COLORS.background }}>
+        {!isBootstrapping ? (
+          <SafeAreaView style={{ flex: 1, backgroundColor: COLORS.background }}>
+            <AuthScreens introReady={introReady} />
+          </SafeAreaView>
+        ) : null}
+      </View>
     );
   }
 
@@ -450,12 +446,27 @@ function WorkspaceApp() {
   );
 }
 
+function RootShell() {
+  const { isBootstrapping } = useMobileAuth();
+  const [introReady, setIntroReady] = useState(false);
+
+  return (
+    <View style={{ flex: 1, backgroundColor: COLORS.background }}>
+      <WorkspaceApp introReady={introReady} />
+      <MobileBrandSplash
+        isBootstrapping={isBootstrapping}
+        onTransitionStart={() => setIntroReady(true)}
+      />
+    </View>
+  );
+}
+
 export default function App() {
   return (
     <SafeAreaProvider>
       <AuthProvider>
         <StatusBar style="dark" />
-        <WorkspaceApp />
+        <RootShell />
       </AuthProvider>
     </SafeAreaProvider>
   );

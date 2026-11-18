@@ -85,21 +85,27 @@ export async function clearTokens(): Promise<void> {
   ]);
 }
 
+const PRODUCTION_API_URL = 'https://optronix-api.201.18.208.63.sslip.io/api/v1';
+
 export function getDefaultApiBaseUrl(): string {
   const envUrl = process.env.EXPO_PUBLIC_API_URL;
   if (envUrl && envUrl.trim()) {
     return envUrl.trim().replace(/\/+$/, '');
   }
-  if (Platform.OS === 'android') {
-    // 10.0.2.2 maps Android Emulator directly to host localhost:4000
-    return 'http://10.0.2.2:4000/api/v1';
-  }
-  return 'http://localhost:4000/api/v1';
+  return PRODUCTION_API_URL;
 }
 
 export async function loadSavedApiBaseUrl(): Promise<string> {
   const saved = await getItem(API_BASE_URL_KEY);
-  return saved?.trim() ? saved.trim().replace(/\/+$/, '') : getDefaultApiBaseUrl();
+  const cleaned = saved?.trim().replace(/\/+$/, '');
+  if (
+    !cleaned ||
+    cleaned.includes('10.0.2.2:4000') ||
+    cleaned.includes('localhost:4000')
+  ) {
+    return getDefaultApiBaseUrl();
+  }
+  return cleaned;
 }
 
 export async function saveApiBaseUrl(url: string): Promise<string> {

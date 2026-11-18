@@ -10,6 +10,10 @@ import { loginSchema, type LoginInput } from '@/shared';
 import { useAuth } from '@/hooks/use-auth';
 import { ApiClientError } from '@/lib/api-client';
 import { FormField, StatusBanner } from '@/components/shared/FormField';
+import {
+  BrandSplashIntro,
+  TypewriterText,
+} from '@/components/shared/BrandSplashIntro';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 
@@ -25,6 +29,7 @@ function LoginFormContent() {
   const { login } = useAuth();
   const [showPassword, setShowPassword] = useState(false);
   const [serverError, setServerError] = useState<string | null>(null);
+  const [introReady, setIntroReady] = useState(false);
 
   const showDemoAccounts =
     process.env.NEXT_PUBLIC_ENABLE_DEMO_PERSONAS !== 'false';
@@ -72,16 +77,38 @@ function LoginFormContent() {
   };
 
   return (
-    <div className="w-full max-w-[400px] space-y-6">
-      <div className="bg-surface-container-lowest rounded-xl border border-hairline shadow-resting p-6 sm:p-7 space-y-5">
-        <div className="space-y-1">
-          <h1 className="text-headline-lg font-semibold text-on-surface tracking-tight">
-            Sign in
-          </h1>
-          <p className="text-body-sm text-on-surface-variant">
-            Enter your work credentials to access Optronix.
-          </p>
-        </div>
+    <>
+      <BrandSplashIntro onTransitionStart={() => setIntroReady(true)} />
+
+      <div
+        className={`w-full max-w-[400px] space-y-6 transition-all duration-500 ease-out ${
+          introReady
+            ? 'opacity-100 translate-y-0'
+            : 'opacity-0 translate-y-2.5'
+        }`}
+      >
+        <div className="bg-surface-container-lowest rounded-xl border border-hairline shadow-resting p-6 sm:p-7 space-y-5">
+          <div className="space-y-1.5">
+            <span className="inline-block text-[10px] font-semibold uppercase tracking-[0.18em] text-secondary min-h-[15px]">
+              <TypewriterText
+                text="Field Sales Workspace"
+                active={introReady}
+                startDelayMs={60}
+                speedMs={24}
+              />
+            </span>
+            <h1 className="text-headline-lg font-semibold text-on-surface tracking-tight">
+              Sign in
+            </h1>
+            <p className="text-body-sm text-on-surface-variant min-h-[20px]">
+              <TypewriterText
+                text="Schedule meetings, verify GPS visits & close follow-ups."
+                active={introReady}
+                startDelayMs={520}
+                speedMs={18}
+              />
+            </p>
+          </div>
 
         {serverError ? (
           <StatusBanner
@@ -197,7 +224,8 @@ function LoginFormContent() {
         Invitation-only workspace. Ask your administrator for an onboarding
         invite if you don&apos;t have an account yet.
       </p>
-    </div>
+      </div>
+    </>
   );
 }
 

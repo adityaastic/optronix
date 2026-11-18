@@ -4,6 +4,16 @@
 
 ---
 
+## Live Cloud Deployment & Android APK
+
+| Surface | Live URL / Artifact |
+| :--- | :--- |
+| **Web Application (`HTTPS`)** | https://optronix.201.18.208.63.sslip.io |
+| **Backend REST API (`HTTPS`)** | https://optronix-api.201.18.208.63.sslip.io/api/v1/health |
+| **Android Release APK** | `optronixapk/optronix-mobile.apk` *(pre-configured to connect directly to the live `HTTPS` cloud API out of the box)* |
+
+---
+
 ## Project Structure
 
 ```text

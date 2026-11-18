@@ -13,6 +13,7 @@ import {
 } from '../lib/api';
 import {
   clearTokens,
+  getDefaultApiBaseUrl,
   loadTokens,
   saveApiBaseUrl,
   saveTokens,
@@ -41,7 +42,7 @@ const AuthContext = createContext<AuthContextValue | null>(null);
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<SessionUser | null>(null);
   const [isBootstrapping, setIsBootstrapping] = useState(true);
-  const [apiBaseUrl, setApiBaseUrl] = useState('http://localhost:4000/api/v1');
+  const [apiBaseUrl, setApiBaseUrl] = useState(getDefaultApiBaseUrl());
 
   const refreshSession = useCallback(async () => {
     const { accessToken } = await loadTokens();

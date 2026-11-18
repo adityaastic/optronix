@@ -1,5 +1,7 @@
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
+  Animated,
+  Easing,
   Image,
   KeyboardAvoidingView,
   Platform,
@@ -17,6 +19,7 @@ import {
   loginSchema,
   passwordPolicySchema,
 } from '../lib/domain';
+import { MobileTypewriterText } from '../components/MobileBrandSplash';
 import {
   BannerAlert,
   CardSurface,
@@ -55,9 +58,20 @@ const DEMO_ACCOUNTS = [
   },
 ] as const;
 
-export function AuthScreens() {
-  const { login, acceptInvitation, apiBaseUrl, updateApiBaseUrl } =
-    useMobileAuth();
+export function AuthScreens({ introReady = true }: { introReady?: boolean }) {
+  const { login, acceptInvitation } = useMobileAuth();
+  const entryAnim = useRef(new Animated.Value(introReady ? 1 : 0)).current;
+
+  useEffect(() => {
+    if (introReady) {
+      Animated.timing(entryAnim, {
+        toValue: 1,
+        duration: 420,
+        easing: Easing.out(Easing.cubic),
+        useNativeDriver: true,
+      }).start();
+    }
+  }, [entryAnim, introReady]);
 
   const [mode, setMode] = useState<AuthMode>('login');
   const [banner, setBanner] = useState<{
@@ -71,9 +85,6 @@ export function AuthScreens() {
   const [password, setPassword] = useState('');
   const [fieldErr, setFieldErr] = useState<Record<string, string>>({});
   const [showDemo, setShowDemo] = useState(false);
-  const [showServerConfig, setShowServerConfig] = useState(false);
-  const [draftApiUrl, setDraftApiUrl] = useState(apiBaseUrl);
-  const [pingStatus, setPingStatus] = useState<string | null>(null);
 
   // Invite state
   const [rawInviteInput, setRawInviteInput] = useState('');
@@ -122,22 +133,6 @@ export function AuthScreens() {
       });
     } finally {
       setBusy(false);
-    }
-  };
-
-  const handleSaveAndPingServer = async () => {
-    setPingStatus('Checking connection...');
-    const saved = await updateApiBaseUrl(draftApiUrl);
-    setDraftApiUrl(saved);
-    try {
-      const res = await mobileApiFetch<{ status: string }>('/health', {
-        skipAuthRefresh: true,
-      });
-      setPingStatus(`Connected (${res.data.status}) -> ${saved}`);
-    } catch (err) {
-      setPingStatus(
-        err instanceof MobileApiError ? err.message : 'Server unreachable',
-      );
     }
   };
 
@@ -299,7 +294,22 @@ export function AuthScreens() {
         contentContainerStyle={styles.scrollContent}
         keyboardShouldPersistTaps="handled"
       >
-        <View style={styles.container}>
+        <Animated.View
+          style={[
+            styles.container,
+            {
+              opacity: entryAnim,
+              transform: [
+                {
+                  translateY: entryAnim.interpolate({
+                    inputRange: [0, 1],
+                    outputRange: [12, 0],
+                  }),
+                },
+              ],
+            },
+          ]}
+        >
           {/* Brand Header */}
           <View style={styles.brandCol}>
             <Image
@@ -307,7 +317,15 @@ export function AuthScreens() {
               style={styles.brandLogo}
               resizeMode="contain"
             />
-            <Text style={styles.brandTag}>Sales &amp; Field Visit Operations</Text>
+            <View style={{ minHeight: 16 }}>
+              <MobileTypewriterText
+                text="FIELD SALES WORKSPACE"
+                active={introReady}
+                startDelayMs={60}
+                speedMs={24}
+                style={styles.brandTag}
+              />
+            </View>
           </View>
 
           <CardSurface style={{ gap: SPACING.lg }}>
@@ -323,9 +341,15 @@ export function AuthScreens() {
               <>
                 <View style={{ gap: 4 }}>
                   <Text style={styles.heading}>Sign in</Text>
-                  <Text style={styles.subtext}>
-                    Access your meetings, field visits, and follow-ups.
-                  </Text>
+                  <View style={{ minHeight: 19 }}>
+                    <MobileTypewriterText
+                      text="Schedule meetings, verify GPS visits & close follow-ups."
+                      active={introReady}
+                      startDelayMs={520}
+                      speedMs={18}
+                      style={styles.subtext}
+                    />
+                  </View>
                 </View>
 
                 <FormInput
@@ -407,49 +431,6 @@ export function AuthScreens() {
                           <Text style={styles.demoEmail}>{d.email}</Text>
                         </Pressable>
                       ))}
-                    </View>
-                  ) : null}
-                </View>
-
-                {/* Progressive Disclosure: API Server URL for APK / Physical Phone / Emulator */}
-                <View style={styles.dividerSection}>
-                  <Pressable
-                    onPress={() => {
-                      setDraftApiUrl(apiBaseUrl);
-                      setShowServerConfig((v) => !v);
-                    }}
-                    style={styles.disclosureHeader}
-                  >
-                    <Text style={styles.disclosureLabel}>
-                      API Server: {apiBaseUrl}
-                    </Text>
-                    <Feather
-                      name={showServerConfig ? 'chevron-up' : 'settings'}
-                      size={14}
-                      color={COLORS.textMuted}
-                    />
-                  </Pressable>
-
-                  {showServerConfig ? (
-                    <View style={{ gap: 8, marginTop: 10 }}>
-                      <FormInput
-                        label="API Base URL"
-                        hint="Use LAN IP on physical phone"
-                        autoCapitalize="none"
-                        value={draftApiUrl}
-                        onChangeText={setDraftApiUrl}
-                        placeholder="http://192.168.1.10:4000/api/v1"
-                      />
-                      <PrimaryButton
-                        label="Save & test connection"
-                        variant="outline"
-                        size="sm"
-                        icon="wifi"
-                        onPress={() => void handleSaveAndPingServer()}
-                      />
-                      {pingStatus ? (
-                        <Text style={styles.pingText}>{pingStatus}</Text>
-                      ) : null}
                     </View>
                   ) : null}
                 </View>
@@ -630,7 +611,7 @@ export function AuthScreens() {
               </>
             ) : null}
           </CardSurface>
-        </View>
+        </Animated.View>
       </ScrollView>
     </KeyboardAvoidingView>
   );
@@ -661,8 +642,10 @@ const styles = StyleSheet.create({
     height: 34,
   },
   brandTag: {
-    fontSize: 12,
-    color: COLORS.textMuted,
+    fontSize: 10,
+    fontWeight: '600',
+    letterSpacing: 1.8,
+    color: COLORS.accent,
   },
   heading: {
     fontSize: 20,
