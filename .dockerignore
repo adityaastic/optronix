@@ -1,0 +1,12 @@
+.git
+**/node_modules
+**/.next
+**/dist
+**/uploads
+**/coverage
+**/test-results
+**/playwright-report
+**/.env
+**/.env.*
+optronixapk
+*.log
