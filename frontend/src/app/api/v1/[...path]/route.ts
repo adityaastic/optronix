@@ -35,6 +35,10 @@ function resolveCandidateTargets(req: NextRequest): Array<{
     origins.push(configured.replace(/\/+$/, '').replace(/\/api\/v1$/i, ''));
   }
 
+  if (process.env.NODE_ENV === 'production') {
+    origins.push('http://optronix-backend:4000');
+  }
+
   const publicHost = getForwardedHost(req);
   if (publicHost.endsWith('.sslip.io') && !publicHost.startsWith('optronix-api.')) {
     const suffix = publicHost.replace(/^[^.]+\./, '');
@@ -59,11 +63,19 @@ function resolveCandidateTargets(req: NextRequest): Array<{
       const defaultPort = protocol === 'https:' ? 443 : 80;
       const connectPort = parsed.port ? Number(parsed.port) : defaultPort;
 
-      // If running inside Coolify Docker network, try internal coolify-proxy first for sslip.io hosts to avoid WAN Hairpin NAT timeouts
+      targets.push({
+        connectHost: parsed.hostname,
+        connectPort,
+        protocol,
+        hostHeader: parsed.host,
+      });
+
+      // Fallback through internal Coolify reverse proxy if WAN Hairpin NAT is blocked on VPS
       if (
         process.env.NODE_ENV === 'production' &&
-        protocol === 'http:' &&
-        parsed.hostname.endsWith('.sslip.io')
+        parsed.hostname !== '127.0.0.1' &&
+        parsed.hostname !== 'localhost' &&
+        parsed.hostname !== 'optronix-backend'
       ) {
         targets.push({
           connectHost: 'coolify-proxy',
@@ -72,13 +84,6 @@ function resolveCandidateTargets(req: NextRequest): Array<{
           hostHeader: parsed.host,
         });
       }
-
-      targets.push({
-        connectHost: parsed.hostname,
-        connectPort,
-        protocol,
-        hostHeader: parsed.host,
-      });
     } catch {
       // Ignore malformed candidate origin
     }
