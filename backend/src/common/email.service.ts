@@ -29,8 +29,8 @@ async function resolveTransporter(): Promise<{
   }).lean();
 
   const smtpUser = (
-    sysSettings?.smtpSenderEmail?.trim() ||
     env.SMTP_USER?.trim() ||
+    sysSettings?.smtpSenderEmail?.trim() ||
     ''
   ).trim();
   const smtpPass = (env.SMTP_PASS ?? '').replace(/\s+/g, '');
