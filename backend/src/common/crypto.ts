@@ -67,13 +67,26 @@ export function verifyRefreshToken(token: string): RefreshTokenPayload {
   return jwt.verify(token, env.JWT_REFRESH_SECRET) as RefreshTokenPayload;
 }
 
+function resolveCookieSecure(res: Response): boolean {
+  if (env.COOKIE_SECURE !== undefined) {
+    return env.COOKIE_SECURE;
+  }
+  const forwardedProto = String(
+    res.req?.headers?.['x-forwarded-proto'] ?? '',
+  )
+    .split(',')[0]
+    ?.trim()
+    .toLowerCase();
+  return Boolean(res.req?.secure || forwardedProto === 'https');
+}
+
 export function setAuthCookies(
   res: Response,
   accessToken: string,
   refreshToken: string,
   remember = false,
 ): void {
-  const isSecure = env.COOKIE_SECURE || env.NODE_ENV === 'production';
+  const isSecure = resolveCookieSecure(res);
   const accessMaxAgeMs = 15 * 60 * 1000;
   const refreshMaxAgeMs = remember
     ? 30 * 24 * 60 * 60 * 1000
@@ -97,7 +110,7 @@ export function setAuthCookies(
 }
 
 export function clearAuthCookies(res: Response): void {
-  const isSecure = env.COOKIE_SECURE || env.NODE_ENV === 'production';
+  const isSecure = resolveCookieSecure(res);
   res.clearCookie(ACCESS_COOKIE_NAME, {
     httpOnly: true,
     secure: isSecure,

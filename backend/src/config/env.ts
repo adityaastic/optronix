@@ -28,7 +28,9 @@ const envSchema = z
     COOKIE_SECURE: z
       .string()
       .optional()
-      .transform((v) => v === 'true'),
+      .transform((v) =>
+        v === undefined || v.trim() === '' ? undefined : v.trim() === 'true',
+      ),
     CORS_ORIGIN: z
       .string()
       .default(

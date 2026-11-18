@@ -8,9 +8,9 @@ async function bootstrap() {
   await ensureSystemRbacAndSettings();
 
   const app = createApp();
-  const server = app.listen(env.API_PORT, () => {
+  const server = app.listen(env.API_PORT, '0.0.0.0', () => {
     console.log(
-      `[OPTRONIX API] Listening on http://localhost:${env.API_PORT} (${env.NODE_ENV})`,
+      `[OPTRONIX API] Listening on http://0.0.0.0:${env.API_PORT} (${env.NODE_ENV})`,
     );
   });
 
