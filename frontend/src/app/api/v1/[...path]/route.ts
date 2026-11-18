@@ -1,5 +1,6 @@
 import http from 'node:http';
 import https from 'node:https';
+import tls from 'node:tls';
 import { Readable } from 'node:stream';
 import type { NextRequest } from 'next/server';
 
@@ -40,9 +41,10 @@ function resolveCandidateTargets(req: NextRequest): Array<{
   }
 
   const publicHost = getForwardedHost(req);
+  const publicProto = getForwardedProto(req);
   if (publicHost.endsWith('.sslip.io') && !publicHost.startsWith('optronix-api.')) {
     const suffix = publicHost.replace(/^[^.]+\./, '');
-    origins.push(`http://optronix-api.${suffix}`);
+    origins.push(`${publicProto}://optronix-api.${suffix}`);
   }
 
   if (process.env.NODE_ENV !== 'production' || origins.length === 0) {
@@ -59,18 +61,19 @@ function resolveCandidateTargets(req: NextRequest): Array<{
   for (const origin of Array.from(new Set(origins))) {
     try {
       const parsed = new URL(origin);
-      const protocol = parsed.protocol === 'https:' ? 'https:' : 'http:';
-      const defaultPort = protocol === 'https:' ? 443 : 80;
+      const effectiveProto: 'http:' | 'https:' =
+        publicProto === 'https' &&
+        parsed.hostname !== '127.0.0.1' &&
+        parsed.hostname !== 'localhost' &&
+        parsed.hostname !== 'optronix-backend'
+          ? 'https:'
+          : parsed.protocol === 'https:'
+            ? 'https:'
+            : 'http:';
+      const defaultPort = effectiveProto === 'https:' ? 443 : 80;
       const connectPort = parsed.port ? Number(parsed.port) : defaultPort;
 
-      targets.push({
-        connectHost: parsed.hostname,
-        connectPort,
-        protocol,
-        hostHeader: parsed.host,
-      });
-
-      // Fallback through internal Coolify reverse proxy if WAN Hairpin NAT is blocked on VPS
+      // In Coolify production, prefer internal coolify-proxy first to avoid 6s WAN Hairpin NAT timeout
       if (
         process.env.NODE_ENV === 'production' &&
         parsed.hostname !== '127.0.0.1' &&
@@ -79,11 +82,18 @@ function resolveCandidateTargets(req: NextRequest): Array<{
       ) {
         targets.push({
           connectHost: 'coolify-proxy',
-          connectPort: 80,
-          protocol: 'http:',
+          connectPort: effectiveProto === 'https:' ? 443 : 80,
+          protocol: effectiveProto,
           hostHeader: parsed.host,
         });
       }
+
+      targets.push({
+        connectHost: parsed.hostname,
+        connectPort,
+        protocol: effectiveProto,
+        hostHeader: parsed.host,
+      });
     } catch {
       // Ignore malformed candidate origin
     }
@@ -114,6 +124,7 @@ function sendUpstream(
       reqHeaders['content-length'] = bodyBuffer.byteLength;
     }
 
+    const sniHost = target.hostHeader.split(':')[0] ?? target.connectHost;
     const upstreamReq = transport.request(
       {
         hostname: target.connectHost,
@@ -122,6 +133,13 @@ function sendUpstream(
         method,
         headers: reqHeaders,
         timeout: 6000,
+        ...(target.protocol === 'https:'
+          ? {
+              servername: sniHost,
+              checkServerIdentity: (_host: string, cert: tls.PeerCertificate) =>
+                tls.checkServerIdentity(sniHost, cert),
+            }
+          : {}),
       },
       (res) => resolve(res),
     );
